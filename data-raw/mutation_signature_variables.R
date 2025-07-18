@@ -52,6 +52,7 @@ data(list = sprintf("submod_%s", "192r_3w"), package = "dndscv") # load dndscv s
 # match dnds mutation types with the canonical mutation types
 mut_types = rownames(substmodel)
 
+library(Biostrings)
 # model dndscv substmodel types:
 triplet_match_substmodel = data.frame(mut_type = mut_types) |>
   mutate(strand = ifelse(substr(mut_type, 2,2) %in% c("A", "G"), "-", "+"),

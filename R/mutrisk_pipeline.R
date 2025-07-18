@@ -1,3 +1,16 @@
+# # # #testing variables (remove once package is finished)
+# select_sigs = c("SBS1", "SBS5", "SBS18", "SBS19")
+# output_path = "~/Documents/"
+# name = "mutrisk_test"
+# WES = FALSE
+# multiple_refit_methods = FALSE
+# sensitivity_analysis = TRUE
+# cell_muts = mutrisk:::cell_muts
+# triplet_match_substmodel = mutrisk:::triplet_match_substmodel
+# source("data-raw/mutation_signature_variables.R")
+# library(tidyverse)
+
+
 #' Pipeline modeling mutation rates and performing side-analyses
 #'
 #' Pipeline function chaining the functions of the mutrisk package
@@ -10,6 +23,7 @@
 #' chr (chromosome), pos (genomic position), #' ref (reference allele), alt (mutated allele), category (in case there are multiple different categories), donor (patient/donor ID)
 #' @param select_sigs Optional: select specific signatures from the COSMIC reference signaturesv3.4: https://cancer.sanger.ac.uk/signatures/sbs/ [default: none]
 #' @param output_path Path where output directory is made
+#' @param metadata Optional: neccesary for obtaining patient-specific mutation rates. Contains at least 2 columns: sampleID and donor.
 #' @param name Optional: Name of analysis (useful in case multiple categories/tissues are run). Will determine name of output folder and  files
 #' @param WES Logical, set to TRUE if using whole-exome data [default: FALSE]
 #' @param multiple_refit_methods Logical - is signature analysis required for multiple methods? [default: FALSE]. For methods being
@@ -19,29 +33,22 @@
 #' @export
 #'
 #' @examples
-
-# testing variables (remove once package is finished)
-# select_sigs = c("SBS1", "SBS5", "SBS18", "SBS19")
-# output_path = "~/Documents/"
-# name = "mutrisk_test"
-# WES = FALSE
-# multiple_refit_methods = FALSE
-# sensitivity_analysis = TRUE
-
-mutrisk_pipeline = function(metadata, cell_muts, select_sigs,
-                            output_path, name,  WES = FALSE,
+mutrisk_pipeline = function(cell_muts, select_sigs,
+                            output_path, metadata = NULL,
+                            name,  WES = FALSE,
                             multiple_refit_methods = FALSE,
                             sensivivity_analysis = TRUE) {
 
+
   # Set output directory and make a subdirectory named "plots"
-  if (exists(name)) {
+  if (exists("name")) {
     outdir = paste0(output_path, "/", name, "/")
   } else {
-    outdir = paste0(output_path, "/mutrisk_analysis")
+    outdir = paste0(output_path, "/mutrisk_analysis/")
   }
 
   if (!dir.exists(outdir)) { dir.create(outdir) }
-  plotdir = paste0(outdir, "/plots")
+  plotdir = paste0(outdir, "/plots/")
   if (!dir.exists(plotdir))  { dir.create(plotdir) }
 
   # Set output region if WES is set to TRUE
@@ -66,14 +73,14 @@ mutrisk_pipeline = function(metadata, cell_muts, select_sigs,
   message("1. model mutation rates using dNdScv and dNdScv-intron (wintr)")
   category_muts = muts
   unique_muts = muts |> dplyr::select(-sampleID) |>
-      dplyr::rename(sampleID = donor) |> distinct() |>   # select unique mutations by donor to exclude shared mutations across cell lineages.
-      select(sampleID, chr, pos, ref, alt)
-  dnds_intron_unique = dndscv_intron(unique_muts, outmats = TRUE, refdb = region, transcript_regions = region)
+      dplyr::rename(sampleID = donor) |> dplyr::distinct() |>   # select unique mutations by donor to exclude shared mutations across cell lineages.
+      dplyr::select(sampleID, chr, pos, ref, alt)
+  dnds_intron_unique = wintr::dndscv_intron(unique_muts, outmats = TRUE, refdb = region, transcript_regions = region)
   save_dnds(dnds_intron_unique, folder = paste0(outdir,"/unique_", name, "_"), outmats = TRUE, selection = TRUE)
 
   # perform extra dNdS analysis using all mutations (not only unique)
   # to annotate individual cells, shared mutations can be added.
-  dnds_intron = dndscv_intron(muts, outmats = TRUE,  refdb = region, transcript_regions = region)
+  dnds_intron = wintr::dndscv_intron(muts, outmats = TRUE,  refdb = region, transcript_regions = region)
   save_dnds(dnds_intron, folder =  paste0(outdir,"/", name, "_"), outmats = TRUE)
 
   # perform the 'regular' dnds to get the mutation rates when using exonic muations only
@@ -149,12 +156,14 @@ mutrisk_pipeline = function(metadata, cell_muts, select_sigs,
 
   # remove signatures for which no contribution is found
   sig_contribution = sig_contribution |>
-      select(sampleID, where(~ is.numeric(.) && any(. > 0)))
+      dplyr::select(sampleID, where(~ is.numeric(.) && any(. > 0)))
   # save signature contribution
   fwrite(sig_contribution, paste0(outdir, "/signature_contributions.tsv"), sep = "\t")
 
   message("3. Get the probabilities for each mutation of signature activity and for individual patients")
-  mutrisk_rates = get_mutrisk(muts = muts_context, dnds = dnds_intron,  metadata = metadata, sig_contribution = sig_contribution)
+  mutrisk_rates = get_mutrisk(muts_context = muts_context, dnds = dnds_intron,
+                              sig_contribution = sig_contribution)
+
   single_mut_sig_rates = mutrisk_rates$single_mut_sig_rates
   fwrite(single_mut_sig_rates, paste0(outdir, name, "_single_mut_sig_rates.tsv.gz"))
 
@@ -164,7 +173,11 @@ mutrisk_pipeline = function(metadata, cell_muts, select_sigs,
   sig_rate_per_individual = sig_rate_per_indv(single_mut_sig_rates, sig_contribution)
 
   # 4. Optional: Correct for the relative sensitivity
-  if (sensitivity_analysis == TRUE) {
+  if (sensitivity_analysis == TRUE & is.null(metadata)) {
+    stop("missing metadata. Supply metadata with columns: sampleID, donor and sensitivity")
+  }
+
+  if (sensitivity_analysis == TRUE & !is.null(metadata)) {
     message("4. Optional addition: Correct the mutation rates by sensitivity rate")
 
     if (!"sensitivity"  %in% colnames(metadata)) {
@@ -185,6 +198,12 @@ mutrisk_pipeline = function(metadata, cell_muts, select_sigs,
   fwrite(sig_rate_per_individual, paste0(outdir, name, "_sig_patient_rates.tsv.gz"))
   fwrite(rate_per_individual, paste0(outdir, name, "_patient_rates.tsv.gz"))
 
-  # TODO: check if it is worthwile to return the values back in the following function:
-  list()
+  # output the data
+  list(dnds_exon = dnds_exon,
+                     dnds_intron_unique = dnds_intron_unique,  # consider not calculating this
+                     dnds_intron = dnds_intron,
+                     mutrisk_rates = mutrisk_rates,
+                     rate_per_individual = rate_per_individual,
+                     sig_rate_per_individual = sig_rate_per_individual)
 }
+

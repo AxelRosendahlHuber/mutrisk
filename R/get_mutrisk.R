@@ -1,18 +1,15 @@
-# make mutrisk function: If changes are made to the function, this is automatically applied to all the different scripts:
-#' Title
+#' Get signature-specific mutation probabilities
 #'
-#' @param muts_context
-#' @param dnds dNdS output list (can be the output of either )
-#' @param metadata metadata object with the following columns; sampleID, donor
+#' @param muts_context list of input mutations with context provided, output of \code{\link{get_mut_context}}
+#' @param dnds dNdS output list (can be the output of either the `dndscv` (dndscv package) or
+#'  `dndscv_intron` (wintr package) functions)
 #' @param sig_contribution data.frame with the signature contribution with sampleID column indicating the sample,
 #'  and other columns being numeric columns indicating the active mutational sigantures
-#' @param wg_ex_rate_estimate Logical: Is the
-#'
 #' @returns
 #' @export
 #'
 #' @examples
-get_mutrisk = function(muts_context, dnds, metadata,  sig_contribution, wg_ex_rate_estimate = FALSE) {
+get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimate = FALSE) {
 
   # convert signature contribution data.frame to matrix
   sig_contribution = sig_contribution |>
@@ -25,11 +22,6 @@ get_mutrisk = function(muts_context, dnds, metadata,  sig_contribution, wg_ex_ra
     print(paste0("ratio observed mutations/annotated mutations is: ", round(ratio_obs_annotated,1),
                  "\n possible due input data being exome or targeted data"))
   }
-
-  # TODO: consider if we want to continue with these rates
-  # if (wg_ex_rate_estimate) {
-  #   wg_exome_rate_estimations = get_wg_exome_rate_estimations(muts_context, dnds)
-  # }
 
   # get the rate across the cohort for each signature (all activities summed up together)
   rates_by_sig = muts_to_sig(dnds, sig_contribution)
@@ -47,7 +39,7 @@ get_mutrisk = function(muts_context, dnds, metadata,  sig_contribution, wg_ex_ra
     as.data.frame() |>
     rownames_to_column("triplet")  |>
     left_join(triplet_match_substmodel |> select(trinuc, triplet) |> distinct(), by = "triplet") |>
-    left_join(hg19_trinuc_counts |> rename(trinuc = trinucleotide), by = "trinuc") |>
+    left_join(hg19_trinuc_counts |> dplyr::rename(trinuc = trinucleotide), by = "trinuc") |>
     mutate(across(starts_with("SBS"), ~ . / trinuc_counts))
 
 
@@ -64,39 +56,39 @@ get_mutrisk = function(muts_context, dnds, metadata,  sig_contribution, wg_ex_ra
     mutate(across(c(mle, cilow, cihigh), \(x) x / wgs_sig_activity)) |>
     select(signature, triplet, strand, mle, cilow, cihigh)
 
-  ###### MEAN calculation mutation rate across mean of patient #######
-  # multiply the rates to the mean across patients
-  patient_cell_contribution = sig_contribution |> as.data.frame() |>
-    rownames_to_column("sampleID") |>
-    left_join(metadata, by = "sampleID") |>
-    pivot_longer(starts_with("SBS"), names_to = "signature", values_to = "wgs_muts_cell") |>
-    group_by(donor, age, signature) |>
-    summarize(wgs_muts_cell = mean(wgs_muts_cell), .groups = "drop")
-
-  # multiply the signature rates by the different mean rates across patients
-  # perform a sanity check if the expected mutation rates are in line with the observed exonic mutation rates
-  patient_cell_rates = single_mut_sig_rates |>
-    left_join(refcds_trinuc_counts, by = c("triplet", "strand")) |>
-    left_join(patient_cell_contribution, relationship = "many-to-many", by = "signature") |>
-    mutate(mle = mle * trinuc_counts * wgs_muts_cell) |>
-    group_by(donor, age, signature, wgs_muts_cell) |>
-    summarize(exonic_muts_cell = sum(mle), .groups = "drop")
+  # ###### MEAN calculation mutation rate across mean of patient #######
+  # # multiply the rates to the mean across patients
+  # patient_cell_contribution = sig_contribution |> as.data.frame() |>
+  #   rownames_to_column("sampleID") |>
+  #   left_join(metadata, by = "sampleID") |>
+  #   pivot_longer(starts_with("SBS"), names_to = "signature", values_to = "wgs_muts_cell") |>
+  #   group_by(donor, age, signature) |>
+  #   summarize(wgs_muts_cell = mean(wgs_muts_cell), .groups = "drop")
+  #
+  # # multiply the signature rates by the different mean rates across patients
+  # # perform a sanity check if the expected mutation rates are in line with the observed exonic mutation rates
+  # patient_cell_rates = single_mut_sig_rates |>
+  #   left_join(refcds_trinuc_counts, by = c("triplet", "strand")) |>
+  #   left_join(patient_cell_contribution, relationship = "many-to-many", by = "signature") |>
+  #   mutate(mle = mle * trinuc_counts * wgs_muts_cell) |>
+  #   group_by(donor, age, signature, wgs_muts_cell) |>
+  #   summarize(exonic_muts_cell = sum(mle), .groups = "drop")
 
   #### Calculate the mean across the individual cells across patients
   cell_contribution = sig_contribution |>
     rownames_to_column("sampleID") |>
-    left_join(metadata, by = "sampleID") |>
+    #left_join(metadata, by = "sampleID") |>
     pivot_longer(starts_with("SBS"), names_to = "signature", values_to = "wgs_muts_cell")
 
   single_cell_rates = single_mut_sig_rates |>
     left_join(refcds_trinuc_counts, by = c("triplet", "strand")) |>
     left_join(cell_contribution, relationship = "many-to-many", by = "signature") |>
     mutate(mle = mle * trinuc_counts * wgs_muts_cell) |>
-    group_by(sampleID, donor, age,  signature, wgs_muts_cell) |>
+    group_by(sampleID, signature, wgs_muts_cell) |>
     summarize(exonic_muts_cell = sum(mle), .groups = "drop")
 
   mutrisk_results = list(single_mut_sig_rates = single_mut_sig_rates,
-                         patient_cell_rates = patient_cell_rates,
+                      #   patient_cell_rates = patient_cell_rates, # for now exclude the patient cell rates
                          single_cell_rates = single_cell_rates)
 
   if (wg_ex_rate_estimate) {

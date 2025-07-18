@@ -38,7 +38,7 @@ muts_to_sig = function(dnds, sig_contribution, input_signatures) {
   trinucs_zero = mut_types[index_zero]
   if (sum(index_zero) > 0) {
     message(paste0(sum(index_zero),
-    "trinucleotides with 0 mutations - impossible to calculate trinucleotide-specific mutation rates
+    " trinucleotides with 0 mutations - impossible to calculate trinucleotide-specific mutation rates
     This rate of the following trinucleotides will be replaced by the rate of a 12-type substitution model\n",
     paste(trinucs_zero, collapse = "\n")))
   }

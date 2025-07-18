@@ -1,5 +1,15 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^data-raw$
-^LICENSE\.md$
+^\.git$
+^\.gitignore$
+^README\.Rmd$
+^cran-comments\.md$
+^docs$
+^pkgdown$
 ^dev$
+^data-raw$
+^.*\.sqlite$
+^.*\.DS_Store$
+^notes\.R$
+^_pkgdown\.yml$
+^\.github$

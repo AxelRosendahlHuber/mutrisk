@@ -1,6 +1,3 @@
-# get signatures for individual mutations:
-library(GenomicRanges)
-
 #' Get mutation context
 #'
 #' @param input_muts list with mutations, 5 columns corresponding to: sampleID, chromosome, position,
@@ -8,6 +5,7 @@ library(GenomicRanges)
 #' @param ref_genome Character vector indicating the reference genome of the mutations. Either hg19 or hg38
 #'
 #' @returns The same mutation list as input, now with an added column containing the trinucleotide (reference base including flanking bases), and triplet (96-trinucelotide format)
+#' @importFrom Biostrings getSeq
 #' @export
 #'
 #' @examples

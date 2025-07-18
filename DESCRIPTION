@@ -9,29 +9,26 @@ Description: Package can be used to model the mutation density across
     cells can be used to estimate the mutation load
 License: GPL (>= 3)
 Depends: 
-    R (>= 4.1.0),
+    R (>= 4.1.0)
 Imports:
     abind,
-    Biostrings,
-    BSgenome.Hsapiens.UCSC.hg19,
     cowplot,
     data.table,
     dplyr,
-    GenomicRanges,
     ggbeeswarm,
     ggsci,
     patchwork,
     reticulate,
     tibble,
-    tidyverse,  
+    dndscv
 Suggests: 
     MutationalPatterns,
     siglasso
 Remotes:
     github::im3sanger/dndscv,
-    github::gersteinlab/siglasso,
+    github::gersteinlab/siglasso
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
-URL: https://github.com/AxelRosendahlHuber/mutrisk
+URL: https://github.com/AxelRosendahlHuber/mutrisk, https://axelrosendahlhuber.github.io/mutrisk/
 BugReports: https://github.com/AxelRosendahlHuber/mutrisk/issues

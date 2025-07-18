@@ -8,6 +8,7 @@
 
 #'
 #' @returns list with: 1) Overview plot of the mutation rates, 2) overall mutation rate and 3) mutation type specific mutation rates
+#' @importFrom patchwork wrap_plots
 #' @export
 #'
 #' @examples

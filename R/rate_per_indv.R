@@ -1,3 +1,19 @@
+#' Calculate sample specific mutation rates
+#'
+#' @param single_mut_sig_rates Mutation rates, output of \code{\link{get_mutrisk}}
+#' @param sig_contribution Contribution of different signatures to the mutations of samples.
+#' Output of \code{\link{fit_muts_to_sigs}}
+#'
+#' @returns A data.frame containing the mutation probabilities for a single cell in a given individual.
+#'  with the columns:
+#'  - sampleID: the name of the sample
+#'  - mut_type: mutation type for which the specific probability is taken
+#'  - mle: maximum likelihood estimate, the value which is typically used
+#'  - cilow: 95% lower confidence interval according to the mutation rate model
+#'  - cihigh: 95% higher confidence interval according to the mutation rate model
+#' @export
+#'
+#' @examples
 rate_per_indv = function(single_mut_sig_rates, sig_contribution) {
 
   mutrates = single_mut_sig_rates |>
@@ -29,7 +45,23 @@ rate_per_indv = function(single_mut_sig_rates, sig_contribution) {
 }
 
 
-# return the mutation rate for each individual sample, splitted out by signature
+#' Calculate sample specific mutation rates, specific by signature
+#'
+#' @param single_mut_sig_rates Mutation rates, output of \code{\link{get_mutrisk}}
+#' @param sig_contribution Contribution of different signatures to the mutations of samples.
+#' Output of \code{\link{fit_muts_to_sigs}}
+#'
+#' @returns A data.frame containing the mutation probabilities for a single cell in a given sample.
+#'  with the columns:
+#'  - sampleID: the name of the sample
+#'  - mut_type: mutation type for which the specific probability is taken
+#'  - signature: the active mutational signature
+#'  - mle: maximum likelihood estimate, the value which is typically used
+#'  - cilow: 95% lower confidence interval according to the mutation rate model
+#'  - cihigh: 95% higher confidence interval according to the mutation rate model
+#' @export
+#'
+#' @examples
 sig_rate_per_indv = function(single_mut_sig_rates, sig_contribution) {
 
   mutrates = single_mut_sig_rates |>
@@ -61,4 +93,3 @@ sig_rate_per_indv = function(single_mut_sig_rates, sig_contribution) {
 
   return(cell_rate_list[[1]])
 }
-

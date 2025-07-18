@@ -1,5 +1,12 @@
-# plot correlation rate for 1, 12, 96 and 192 trinucleotide rates across the individual sampesl
-
+#' plot correlation rate for 1, 12, 96 and 192 trinucleotide rates across the individual samples
+#'
+#' @param dnds_intron dnds output list resulting from \link[dndscv::dndscv]{dndscv} or
+#'  \link[wintr::dndscv_intron]{dndscv_intron}
+#'
+#' @returns Plot with the correlation values for
+#' @export
+#'
+#' @examples
 plot_correlation_substmodel = function(dnds_intron) {
 
   # get the average mutation rate compared against trinucs:

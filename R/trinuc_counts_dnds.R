@@ -1,4 +1,13 @@
-# calculate the trinuc counts in the RefCDS (to correct for the actual rate)
+#' Count trinucleotides in dnds array object
+#' @description calculate the trinuc counts in the RefCDS to correct mutation rates in either
+#' an dnds (exome) or dnds-intron object (exome + introns)
+#'
+#' @param dnds_array
+#'
+#' @returns trinucleotide counts for th
+#'
+#' @examples
+#'
 trinuc_counts_dnds = function(dnds_array) {
 
   # "stack" all the trinucleotide frames
