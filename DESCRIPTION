@@ -20,10 +20,13 @@ Imports:
     patchwork,
     reticulate,
     tibble,
-    dndscv
+    dndscv,
+    Biostrings,
+    GenomicRanges,
+    ggplot2,
+    tidyr
 Suggests: 
     MutationalPatterns,
-    siglasso
 Remotes:
     github::im3sanger/dndscv,
     github::gersteinlab/siglasso

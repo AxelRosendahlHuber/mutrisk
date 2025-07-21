@@ -58,7 +58,7 @@ plot_correlation_substmodel = function(dnds_intron) {
     theme_classic() +
     cowplot::panel_border() +
     ggsci::scale_color_igv() +
-    labs(y = "error towards average observed 192-trinucleotide rate", x = NULL) +
+    labs(y = "Relative rate compared with average observed 192-trinucleotide rate", x = NULL) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 }
 

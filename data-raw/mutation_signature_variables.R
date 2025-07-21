@@ -42,11 +42,6 @@ names(sig_colors) = signature_names
 COLORS6 <- c("#2EBAED", "#000000", "#DE1C14",
              "#D4D2D2", "#ADCC54", "#F0D0CE")
 
-# COLORS7 <- c("#2EBAED", "#000000", "#DE1C14",
-#              "#E98C7B", "#D4D2D2", "#ADCC54",
-#              "#F0D0CE")
-
-
 # load dndscv substmodel
 data(list = sprintf("submod_%s", "192r_3w"), package = "dndscv") # load dndscv substmodel
 
@@ -64,13 +59,8 @@ triplet_match_substmodel = data.frame(mut_type = mut_types) |>
   mutate(triplet = paste0(substr(trinuc, 1,1), "[", substr(trinuc, 2,2), ">", mut, "]", substr(trinuc, 3,3)), type = substr(triplet, 3,5),
          triplet = factor(triplet, levels = TRIPLETS_96))
 
-### TEST DATA: Can be removed later
-library(dplyr)
-muts = fread("~/Nextcloud/Documents/mutrates/processed_data/blood/blood_cell_muts.tsv")
-cell_muts = muts |> filter(sampleID %in% unique(sampleID)[1:10])
-metadata = fread("~/Nextcloud/Documents/mutrates/processed_data/blood/blood_metadata.tsv") |>
-  filter(sampleID %in% cell_muts$sampleID)
-
+usethis::use_data(triplet_match_substmodel, overwrite = TRUE)
+usethis::use_data(mut_types, overwrite = TRUE)
 
 # use the data internally:
 usethis::use_data(triplet_match_substmodel, mut_types, COLORS6, TRIPLETS_96,

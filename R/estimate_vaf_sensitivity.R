@@ -103,7 +103,7 @@ effect_coverage_vaf = function(cell_muts, metadata) {
       stat_smooth(geom = "line", method = "lm", alpha = 0.5) +
       facet_grid(. ~ adjustment) +
       theme_bw() +
-      scale_y_continuous(limits = c(0, NA), label = scales::comma) +
+      scale_y_continuous(limits = c(0, NA), labels = scales::comma) +
       theme(legend.position = "none")
 
   return(list(df_results = df_results, plot = plot))

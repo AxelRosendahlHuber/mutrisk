@@ -33,7 +33,7 @@ get_syn_mutrates = function(dnds) {
 #'   and a structure compatible with `get_syn_mutrates`.
 #' @return A `patchwork` object representing a multi-panel plot, comparing:
 #'   1. Number of mutations and mutable sites between exon and intron-exon regions.
-#'   2. Global dN/dS ($\Omega$) estimates and their confidence intervals.
+#'   2. Global dN/dS estimates and their confidence intervals.
 #'   3. Trinucleotide mutation rates (absolute and exon/intron ratio).
 #'   4. A log-log scatter plot of exon vs. intron mutation rates.
 #' @importFrom dplyr mutate left_join filter
@@ -42,8 +42,6 @@ get_syn_mutrates = function(dnds) {
 #' @importFrom cowplot theme_cowplot
 #' @importFrom data.table data.table rbindlist
 #' @importFrom patchwork plot_layout plot_annotation
-#' @importFrom magrittr `%>%`
-#' @importFrom rlang .data
 #'
 #' @export
 compare_intron_exon = function(dnds_exon, dnds_intron) {
@@ -60,7 +58,7 @@ compare_intron_exon = function(dnds_exon, dnds_intron) {
     mutate(plotname = paste0(type, "\nRatio: 1/", ratio))
 
   counts_plot = counts |>
-    pivot_longer(-c(type, ratio, plotname)) |>
+    tidyr::pivot_longer(-c(type, ratio, plotname)) |>
     ggplot(aes(x = name, y = value, fill = name)) +
     facet_wrap(.~ plotname  , scales = "free_y") +
     geom_col() +
@@ -90,7 +88,7 @@ compare_intron_exon = function(dnds_exon, dnds_intron) {
     mutate(`exon/intron ratio` = mutrates_exon / mutrates_intron)
 
   df_long = df |>
-    pivot_longer(c(`mutrates exon`, `mutrates intron`, `exon/intron ratio`))
+    tidyr::pivot_longer(c(`mutrates exon`, `mutrates intron`, `exon/intron ratio`))
 
   trinuc_plot = ggplot(df_long, aes(x = triplet, y = value, alpha = strand, fill = type)) +
     geom_col(position = position_dodge()) + facet_grid(name ~ . , scales = "free_y") +
