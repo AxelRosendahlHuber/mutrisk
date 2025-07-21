@@ -8,10 +8,9 @@
 #' @param vaf_values Numeric vector of the observed VAF of the mutations
 #'
 #' @returns Numeric value estimating the VAF
+#' @export
 #'
 #' @examples
-#' #' seq = rnorm(10, 0.5, sd = 0.1)
-#' estimate_vaf(seq)
 estimate_vaf = function(vaf_values) {
   density_est <- density(vaf_values, bw = 0.1) # draw a density curve for the values
   vaf = density_est$x[which.max(density_est$y)] # find the VAF as the max of the density curve

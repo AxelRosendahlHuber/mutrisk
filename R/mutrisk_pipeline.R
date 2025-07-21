@@ -1,14 +1,14 @@
-# # # #testing variables (remove once package is finished)
-# select_sigs = c("SBS1", "SBS5", "SBS18", "SBS19")
+# # # # #testing variables (remove once package is finished)
+# input_signatures = c("SBS1", "SBS5", "SBS18", "SBS19")
 # output_path = "~/Documents/"
 # name = "mutrisk_test"
 # WES = FALSE
 # multiple_refit_methods = FALSE
-# sensitivity_analysis = TRUE
+# sensitivity_correction = TRUE
 # cell_muts = mutrisk:::cell_muts
 # triplet_match_substmodel = mutrisk:::triplet_match_substmodel
-# source("data-raw/mutation_signature_variables.R")
 # library(tidyverse)
+# source("data-raw/mutation_signature_variables.R")
 
 
 #' Pipeline modeling mutation rates and performing side-analyses
@@ -19,25 +19,34 @@
 #'  3. Separate mutation rates by signature
 #'  4. Combine them back by patient
 #'
-#' @param cell_muts Dataframe containing mutations, in the format: sampleID (ID of individual sample, can be more for each donor)
-#' chr (chromosome), pos (genomic position), #' ref (reference allele), alt (mutated allele), category (in case there are multiple different categories), donor (patient/donor ID)
-#' @param select_sigs Optional: select specific signatures from the COSMIC reference signaturesv3.4: https://cancer.sanger.ac.uk/signatures/sbs/ [default: none]
+#' @param cell_muts Dataframe containing mutations, in the format: sampleID
+#'  (ID of individual sample, can be more for each donor)
+#' chr (chromosome), pos (genomic position), #' ref (reference allele), alt (mutated allele),
+#'  category (in case there are multiple different categories), donor (patient/donor ID)
+#' @param input_signatures Optional: select specific signatures from the
+#'  COSMIC reference signatures v3.4: https://cancer.sanger.ac.uk/signatures/sbs/ [default: none]
 #' @param output_path Path where output directory is made
-#' @param metadata Optional: neccesary for obtaining patient-specific mutation rates. Contains at least 2 columns: sampleID and donor.
-#' @param name Optional: Name of analysis (useful in case multiple categories/tissues are run). Will determine name of output folder and  files
+#' @param metadata Optional: neccesary for obtaining patient-specific mutation rates.
+#'  Contains at least 2 columns: sampleID and donor.
+#' @param name Optional: Name of analysis (useful in case multiple categories/tissues are run).
+#'  Will determine name of output folder and  files
 #' @param WES Logical, set to TRUE if using whole-exome data [default: FALSE]
-#' @param multiple_refit_methods Logical - is signature analysis required for multiple methods? [default: FALSE]. For methods being
-#' tested in the extensive analysis see \code{\link{fit_all_sig_methods}}. Note: refitting multiple methods for large datasets can be very compute-intensive
+#' @param multiple_refit_methods Logical - is signature analysis required for multiple methods? [default: FALSE].
+#'  For methods being tested in the extensive analysis see \code{\link{fit_all_sig_methods}}.
+#' Note: refitting multiple methods for large datasets can be very compute-intensive
+#' @param sample_sig_specific Is output per sample/signature desired (with many samples/signatures can return very large output)
+#' @param sensitivity_correction Logical: is sensitivity analysis wanted.
+#'  Requires also metadata with a 'sensitivity' column denoting the sensitivity.
 #'
 #' @returns
 #' @export
 #'
 #' @examples
-mutrisk_pipeline = function(cell_muts, select_sigs,
+mutrisk_pipeline = function(cell_muts, input_signatures,
                             output_path, metadata = NULL,
                             name,  WES = FALSE,
                             multiple_refit_methods = FALSE,
-                            sensivivity_analysis = TRUE) {
+                            sensitivity_correction = FALSE) {
 
 
   # Set output directory and make a subdirectory named "plots"
@@ -64,9 +73,13 @@ mutrisk_pipeline = function(cell_muts, select_sigs,
   muts = as.data.frame(cell_muts)[,names]
 
   # if provided, select specific signatures
-  signatures = mutrisk::signatures # define the "signatures" variable as the active signatures in cosmic v3.4
-  if (!missing(select_sigs)) {
-    signatures = signatures[,select_sigs] # pre-select active signatures present in the tissue
+  if (is.matrix(input_signatures)) {
+    signatures = input_signatures
+  }
+
+  if (is.character(input_signatures)) {
+    signatures = mutrisk::signatures # define the "signatures" variable as the active signatures in cosmic v3.4
+    signatures = signatures[,input_signatures] # pre-select active signatures present in the tissue
   }
 
   # 1. perform dNdScv and determine the mutation rates of the individual processes:
@@ -167,17 +180,18 @@ mutrisk_pipeline = function(cell_muts, select_sigs,
   single_mut_sig_rates = mutrisk_rates$single_mut_sig_rates
   fwrite(single_mut_sig_rates, paste0(outdir, name, "_single_mut_sig_rates.tsv.gz"))
 
-  # get the individual single mutation rates
-  rate_per_individual = rate_per_indv(single_mut_sig_rates, sig_contribution)
-  # get the signature-specific mutation rates for each trinucleotide
-  sig_rate_per_individual = sig_rate_per_indv(single_mut_sig_rates, sig_contribution)
+  # get the sample-specific single mutation rates
+  rate_per_sample = rate_per_indv(single_mut_sig_rates, sig_contribution)
+  # get the sample-specific signature mutation rates for each trinucleotide
+  # (with many samples/signatures very large output)
+  sig_rate_per_sample = sig_rate_per_indv(single_mut_sig_rates, sig_contribution)
 
   # 4. Optional: Correct for the relative sensitivity
-  if (sensitivity_analysis == TRUE & is.null(metadata)) {
+  if (sensitivity_correction == TRUE & is.null(metadata)) {
     stop("missing metadata. Supply metadata with columns: sampleID, donor and sensitivity")
   }
 
-  if (sensitivity_analysis == TRUE & !is.null(metadata)) {
+  if (sensitivity_correction == TRUE & !is.null(metadata)) {
     message("4. Optional addition: Correct the mutation rates by sensitivity rate")
 
     if (!"sensitivity"  %in% colnames(metadata)) {
@@ -186,24 +200,26 @@ mutrisk_pipeline = function(cell_muts, select_sigs,
       Check the function get_sensitivity() to calculate the sensitivities across samples and run again")
     }
 
-   sig_rate_per_individual = sig_rate_per_individual |>
+    sig_rate_per_sample = sig_rate_per_sample |>
       left_join(metadata, by = "sampleID") |>
       mutate(across(c(mle, cilow, cihigh), ~ ./sensitivity))
 
-    rate_per_individual = rate_per_individual |>
+    rate_per_sample = rate_per_sample |>
       left_join(metadata, by = "sampleID") |>
       mutate(across(c(mle, cilow, cihigh), ~ ./sensitivity))
+
   }
 
-  fwrite(sig_rate_per_individual, paste0(outdir, name, "_sig_patient_rates.tsv.gz"))
-  fwrite(rate_per_individual, paste0(outdir, name, "_patient_rates.tsv.gz"))
+  fwrite(rate_per_sample, paste0(outdir, name, "_patient_rates.tsv.gz"))
 
   # output the data
-  list(dnds_exon = dnds_exon,
+  output_list = list(dnds_exon = dnds_exon,
                      dnds_intron_unique = dnds_intron_unique,  # consider not calculating this
                      dnds_intron = dnds_intron,
                      mutrisk_rates = mutrisk_rates,
-                     rate_per_individual = rate_per_individual,
-                     sig_rate_per_individual = sig_rate_per_individual)
+                     rate_per_sample = rate_per_sample,
+                     sig_rate_per_sample = rate_per_sample)
+
+  output_list
 }
 

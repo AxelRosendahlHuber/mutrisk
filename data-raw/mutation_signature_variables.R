@@ -1,7 +1,8 @@
 ## Code to prepare all the variables for dndscv internal values
 
 # some code taken from: https://github.com/ToolsVanBox/MutationalPatterns/blob/master/R/MutationalPatterns.R
-
+library(data.table)
+library(tidyverse)
 chroms = paste0("chr", c(1:22, "X"))
 
 SUBSTITUTIONS = mut_types = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G")

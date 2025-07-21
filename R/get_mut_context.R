@@ -6,6 +6,7 @@
 #'
 #' @returns The same mutation list as input, now with an added column containing the trinucleotide (reference base including flanking bases), and triplet (96-trinucelotide format)
 #' @importFrom Biostrings getSeq
+#' @importFrom GenomicRanges GRanges
 #' @export
 #'
 #' @examples
