@@ -47,7 +47,6 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
   # trinuc counts whole genome
   # short part calculating three levels of different counts:
   # rates for a single signature
-
   refcds_trinuc_counts = trinuc_counts_dnds(dnds$L) # count the tricnucleotide counts present in the exonic regions
 
   # correct the input rates for the all rates (wgs data: whole-genome, targeted data: all regions) rates and calculate the mutation rate for a single mutation
@@ -56,28 +55,9 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
     mutate(across(c(mle, cilow, cihigh), \(x) x / wgs_sig_activity)) |>
     select(signature, triplet, strand, mle, cilow, cihigh)
 
-  # ###### MEAN calculation mutation rate across mean of patient #######
-  # # multiply the rates to the mean across patients
-  # patient_cell_contribution = sig_contribution |> as.data.frame() |>
-  #   rownames_to_column("sampleID") |>
-  #   left_join(metadata, by = "sampleID") |>
-  #   pivot_longer(starts_with("SBS"), names_to = "signature", values_to = "wgs_muts_cell") |>
-  #   group_by(donor, age, signature) |>
-  #   summarize(wgs_muts_cell = mean(wgs_muts_cell), .groups = "drop")
-  #
-  # # multiply the signature rates by the different mean rates across patients
-  # # perform a sanity check if the expected mutation rates are in line with the observed exonic mutation rates
-  # patient_cell_rates = single_mut_sig_rates |>
-  #   left_join(refcds_trinuc_counts, by = c("triplet", "strand")) |>
-  #   left_join(patient_cell_contribution, relationship = "many-to-many", by = "signature") |>
-  #   mutate(mle = mle * trinuc_counts * wgs_muts_cell) |>
-  #   group_by(donor, age, signature, wgs_muts_cell) |>
-  #   summarize(exonic_muts_cell = sum(mle), .groups = "drop")
-
   #### Calculate the mean across the individual cells across patients
   cell_contribution = sig_contribution |>
     rownames_to_column("sampleID") |>
-    #left_join(metadata, by = "sampleID") |>
     pivot_longer(starts_with("SBS"), names_to = "signature", values_to = "wgs_muts_cell")
 
   single_cell_rates = single_mut_sig_rates |>
@@ -88,7 +68,6 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
     summarize(exonic_muts_cell = sum(mle), .groups = "drop")
 
   mutrisk_results = list(single_mut_sig_rates = single_mut_sig_rates,
-                      #   patient_cell_rates = patient_cell_rates, # for now exclude the patient cell rates
                          single_cell_rates = single_cell_rates)
 
   if (wg_ex_rate_estimate) {

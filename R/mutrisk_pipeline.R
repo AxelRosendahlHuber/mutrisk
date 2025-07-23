@@ -1,4 +1,4 @@
-# # # # #testing variables (remove once package is finished)
+# # #testing variables (remove once package is finished)
 # input_signatures = c("SBS1", "SBS5", "SBS18", "SBS19")
 # output_path = "~/Documents/"
 # name = "mutrisk_test"
@@ -8,7 +8,10 @@
 # cell_muts = mutrisk:::cell_muts
 # triplet_match_substmodel = mutrisk:::triplet_match_substmodel
 # library(tidyverse)
+# library(wintr)
 # source("data-raw/mutation_signature_variables.R")
+
+#devtools::load_all()# load all the variables/functions
 
 
 #' Pipeline modeling mutation rates and performing side-analyses
@@ -89,16 +92,16 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
       dplyr::rename(sampleID = donor) |> dplyr::distinct() |>   # select unique mutations by donor to exclude shared mutations across cell lineages.
       dplyr::select(sampleID, chr, pos, ref, alt)
   dnds_intron_unique = wintr::dndscv_intron(unique_muts, outmats = TRUE, refdb = region, transcript_regions = region)
-  save_dnds(dnds_intron_unique, folder = paste0(outdir,"/unique_", name, "_"), outmats = TRUE, selection = TRUE)
+  wintr::save_dnds(dnds_intron_unique, folder = paste0(outdir,"/unique_", name, "_"), outmats = TRUE, selection = TRUE)
 
   # perform extra dNdS analysis using all mutations (not only unique)
   # to annotate individual cells, shared mutations can be added.
   dnds_intron = wintr::dndscv_intron(muts, outmats = TRUE,  refdb = region, transcript_regions = region)
-  save_dnds(dnds_intron, folder =  paste0(outdir,"/", name, "_"), outmats = TRUE)
+  wintr::save_dnds(dnds_intron, folder =  paste0(outdir,"/", name, "_"), outmats = TRUE)
 
   # perform the 'regular' dnds to get the mutation rates when using exonic muations only
   dnds_exon = dndscv::dndscv(unique_muts,  outmats = TRUE)
-  save_dnds(dnds_exon, folder =  paste0(outdir,"/exon_", name, "_"), outmats = TRUE)
+  wintr::save_dnds(dnds_exon, folder =  paste0(outdir,"/exon_", name, "_"), outmats = TRUE)
 
   # inspect and plot correlations, intron/exon rates and correlations between observe and expected
   # mutation rates for genes
@@ -202,7 +205,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
 
     sig_rate_per_sample = sig_rate_per_sample |>
       left_join(metadata, by = "sampleID") |>
-      mutate(across(c(mle, cilow, cihigh), ~ ./sensitivity))
+      mutate(across(contains(">"), ~ ./sensitivity))
 
     rate_per_sample = rate_per_sample |>
       left_join(metadata, by = "sampleID") |>
@@ -210,7 +213,9 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
 
   }
 
-  fwrite(rate_per_sample, paste0(outdir, name, "_patient_rates.tsv.gz"))
+  fwrite(rate_per_sample, paste0(outdir, name, "_rate_per_sample.tsv.gz"))
+  fwrite(sig_rate_per_sample, paste0(outdir, name, "_sig_rate_per_sample.tsv.gz"))
+
 
   # output the data
   output_list = list(dnds_exon = dnds_exon,
@@ -218,7 +223,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
                      dnds_intron = dnds_intron,
                      mutrisk_rates = mutrisk_rates,
                      rate_per_sample = rate_per_sample,
-                     sig_rate_per_sample = rate_per_sample)
+                     sig_rate_per_sample = sig_rate_per_sample)
 
   output_list
 }
