@@ -15,8 +15,9 @@ muts_to_sig = function(dnds, sig_contribution, input_signatures) {
 
   if (!missing(input_signatures)) {
     signatures = input_signatures # use the user-provided signatures
-    signatures = signatures[TRIPLETS_96,] # make sure the signatures are formatted in the right way
   }
+
+  signatures = signatures[TRIPLETS_96,] # make sure the signatures are formatted in the right way
 
   if (!(all(colnames(sig_contribution) %in% colnames(signatures)))) {
     stop("signature names of signature contribution and profile matrix do not match")
@@ -75,3 +76,4 @@ muts_to_sig = function(dnds, sig_contribution, input_signatures) {
 
   return(rates_by_sig)
 }
+

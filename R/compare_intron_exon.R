@@ -48,10 +48,10 @@ compare_intron_exon = function(dnds_exon, dnds_intron) {
 
   counts = data.frame(
     type = c("number of mutations", "number of mutable sites"),
-    exon= c(sum(dnds_exon$nsites$n_muts),
-                    sum(dnds_exon$nsites$n_sites) / 3),
-    intron_exon = c(sum(dnds_intron$nsites$n_muts),
-              sum(dnds_intron$nsites$n_sites)/ 3 )) |>
+    exon= c(sum(dnds_exon$N),
+                    sum(dnds_exon$L) / 3),
+    intron_exon = c(sum(dnds_intron$N),
+              sum(dnds_intron$L)/ 3 )) |>
     mutate(exon = as.integer(exon),
            intron_exon = as.integer(intron_exon),
       ratio = round(intron_exon/exon, 1)) |>
@@ -123,3 +123,4 @@ compare_intron_exon = function(dnds_exon, dnds_intron) {
     plot_annotation(tag_levels = "A") &
     theme(plot.margin = margin(mg, mg, mg, mg, unit = "mm"))
 }
+

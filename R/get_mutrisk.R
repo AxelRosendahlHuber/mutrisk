@@ -4,16 +4,20 @@
 #' @param dnds dNdS output list (can be the output of either the `dndscv` (dndscv package) or
 #'  `dndscv_intron` (wintr package) functions)
 #' @param sig_contribution data.frame with the signature contribution with sampleID column indicating the sample,
+#' @param input_signatures Matrix or dataframe with signatures
 #'  and other columns being numeric columns indicating the active mutational sigantures
 #' @returns
 #' @export
 #'
 #' @examples
-get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimate = FALSE) {
+get_mutrisk = function(muts_context, dnds,  sig_contribution, input_signatures) {
 
   # convert signature contribution data.frame to matrix
-  sig_contribution = sig_contribution |>
-    column_to_rownames("sampleID")
+  if ("sampleID" %in% colnames(sig_contribution)) {
+    sig_contribution = sig_contribution |>
+      column_to_rownames("sampleID")
+  }
+
 
   # compare exome and whole-genome mutation data
   # quick check if the ratio observed/annotated mutations is not too high - warning that this could be a sign of using exome data
@@ -24,7 +28,7 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
   }
 
   # get the rate across the cohort for each signature (all activities summed up together)
-  rates_by_sig = muts_to_sig(dnds, sig_contribution)
+  rates_by_sig = muts_to_sig(dnds, sig_contribution, input_signatures)
 
   # compare rates of annotated mutations in RefCDS and all mutations. To 'simulate' mutations in a given example using the input data, a correction is necessary
   sig_all_rates = data.frame(wgs_sig_activity = colSums(sig_contribution),
@@ -34,7 +38,7 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
   # the mutation rates in rates_by_sig are the total mutation rates observed in the cohort in the refCDS, calculated by trinucleotide
   # 1: The mutation rate for the trinuc level in refcds = rates_by_sig
   # 2: The mutation rate for the whole-genome level
-  signatures = signatures[, sig_all_rates$signature] # pre-select active signatures present in the tissue
+  signatures = input_signatures[, sig_all_rates$signature] # pre-select active signatures present in the tissue
   wg_trinuc_rates = t(t(signatures) *  sig_all_rates$wgs_sig_activity) |>
     as.data.frame() |>
     rownames_to_column("triplet")  |>
@@ -70,9 +74,5 @@ get_mutrisk = function(muts_context, dnds,  sig_contribution, wg_ex_rate_estimat
   mutrisk_results = list(single_mut_sig_rates = single_mut_sig_rates,
                          single_cell_rates = single_cell_rates)
 
-  if (wg_ex_rate_estimate) {
-    mutrisk_results = c(mutrisk_results,
-                        wg_exome_rate_estimations = wg_exome_rate_estimations)
-  }
   return(mutrisk_results)
 }

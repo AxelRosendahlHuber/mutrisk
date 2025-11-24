@@ -1,5 +1,17 @@
-# # #testing variables (remove once package is finished)
+# library(tidyverse)
+# library(wintr)
+# source("data-raw/mutation_signature_variables.R")
+# # # #testing variables (remove once package is finished)
 # input_signatures = c("SBS1", "SBS5", "SBS18", "SBS19")
+#
+# # input_signatures:
+# # make list for signatures used for re-fitting:
+# input_signatures = fread("~/Nextcloud/Documents/mutrisk_manuscript/raw_data/blood/blood_chemotherapy/chemotherapy-v1.0/5_Mutational_signature_analysis/mutational_signatures_analysis/SBS_signatures_profiles.txt") |>
+#   column_to_rownames("Type")
+# input_signatures = input_signatures[mutrisk:::TRIPLETS_96, c("SBS1+SBS5", "SBSBlood") ]
+#colnames(input_signatures) = c("SBS1.SBS5", "SBSBlood")
+
+#
 # output_path = "~/Documents/"
 # name = "mutrisk_test"
 # WES = FALSE
@@ -7,9 +19,7 @@
 # sensitivity_correction = TRUE
 # cell_muts = mutrisk:::cell_muts
 # triplet_match_substmodel = mutrisk:::triplet_match_substmodel
-# library(tidyverse)
-# library(wintr)
-# source("data-raw/mutation_signature_variables.R")
+
 
 #devtools::load_all()# load all the variables/functions
 
@@ -51,7 +61,6 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
                             multiple_refit_methods = FALSE,
                             sensitivity_correction = FALSE) {
 
-
   # Set output directory and make a subdirectory named "plots"
   if (exists("name")) {
     outdir = paste0(output_path, "/", name, "/")
@@ -64,7 +73,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
   if (!dir.exists(plotdir))  { dir.create(plotdir) }
 
   # Set output region if WES is set to TRUE
-  if (WES) {
+  if (WES == TRUE) {
     region = "WES"
   } else {region = "WGS"}
 
@@ -76,7 +85,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
   muts = as.data.frame(cell_muts)[,names]
 
   # if provided, select specific signatures
-  if (is.matrix(input_signatures)) {
+  if (is.matrix(input_signatures) | is.data.frame(input_signatures)) {
     signatures = input_signatures
   }
 
@@ -159,7 +168,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
       plot_annotation(tag_levels = "A") &
       theme(plot.margin = margin(5,5,5,5, unit = "mm"),
             plot.tag = element_text(face = 'bold'))
-      ggsave(paste0("plots/", tissue, "/", select_category, "_", "refit_check.png"), refit_check_plots, width = 18, height = 14, bg = "white")
+      ggsave(paste0(plotdir, tissue, "_", name, "_", "refit_check.png"), refit_check_plots, width = 18, height = 14, bg = "white")
 
       # add the signature extraction from the selected category as output. Take the MuSical refitted values as final value
       sig_contribution = signature_refits |>
@@ -178,7 +187,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
 
   message("3. Get the probabilities for each mutation of signature activity and for individual patients")
   mutrisk_rates = get_mutrisk(muts_context = muts_context, dnds = dnds_intron,
-                              sig_contribution = sig_contribution)
+                              sig_contribution = sig_contribution, input_signatures = signatures)
 
   single_mut_sig_rates = mutrisk_rates$single_mut_sig_rates
   fwrite(single_mut_sig_rates, paste0(outdir, name, "_single_mut_sig_rates.tsv.gz"))
@@ -215,16 +224,14 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
 
   fwrite(rate_per_sample, paste0(outdir, name, "_rate_per_sample.tsv.gz"))
   fwrite(sig_rate_per_sample, paste0(outdir, name, "_sig_rate_per_sample.tsv.gz"))
-
-
-  # output the data
-  output_list = list(dnds_exon = dnds_exon,
-                     dnds_intron_unique = dnds_intron_unique,  # consider not calculating this
-                     dnds_intron = dnds_intron,
-                     mutrisk_rates = mutrisk_rates,
-                     rate_per_sample = rate_per_sample,
-                     sig_rate_per_sample = sig_rate_per_sample)
-
-  output_list
+#
+#   # output the data
+#   output_list = list(dnds_exon = dnds_exon,
+#                      dnds_intron_unique = dnds_intron_unique,  # consider not calculating this
+#                      dnds_intron = dnds_intron,
+#                      mutrisk_rates = mutrisk_rates,
+#                      rate_per_sample = rate_per_sample,
+#                      sig_rate_per_sample = sig_rate_per_sample)
+#   output_list
 }
 

@@ -75,11 +75,10 @@ sig_rate_per_indv = function(single_mut_sig_rates, sig_contribution) {
   mutrates_mle = mutrates |>
       select(signature, mut_type,mle) |>
       pivot_wider(values_from = mle, names_from = signature) |>
-      column_to_rownames("mut_type") |>
-      t()
+      column_to_rownames("mut_type")
 
   # calculate the trinucleotide rate for each of the patients in the cohort
   sig_rates = lapply(as.data.frame(t(sig_contribution)), \(x) as.data.table(x* t(mutrates_mle), keep.rownames = "signature"))
-    cell_rates = rbindlist(sig_rates, idcol = "sampleID")
+  cell_rates = rbindlist(sig_rates, idcol = "sampleID")
   return(cell_rates)
 }
