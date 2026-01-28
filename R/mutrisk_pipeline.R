@@ -130,7 +130,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
   ggsave(paste0(plotdir, name, "_corr_syn_obs_intron.png"), plot_cor_intron, width = 6, height = 3)
 
   plot_cor_subs = plot_correlation_substmodel(dnds_intron) +
-    labs(title = "Correlation expected synonymous to observed:", subtitle = name)
+    labs(title = "Comparison different substitution models:", subtitle = name)
   ggsave(paste0(plotdir, name, "_substmodel.png"), plot_cor_subs, width = 10, height = 6)
 
   plot_comparison = compare_intron_exon(dnds_intron = dnds_intron, dnds_exon = dnds_exon) +
@@ -165,7 +165,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
     contribution_cosine = compare_contribution_cosine(signature_refits)
     refit_check_plots = plot_refits / (cossim_refits | contribution_cosine | plot_spacer() ) +
       plot_layout(heights  = c(1.5, 1)) +
-      plot_annotation(tag_levels = "A") &
+      plot_annotation(tag_levels = "A") +
       theme(plot.margin = margin(5,5,5,5, unit = "mm"),
             plot.tag = element_text(face = 'bold'))
       ggsave(paste0(plotdir, tissue, "_", name, "_", "refit_check.png"), refit_check_plots, width = 18, height = 14, bg = "white")

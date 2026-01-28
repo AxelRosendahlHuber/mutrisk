@@ -191,6 +191,7 @@ cos_sim_reconstructed_methods = function(signature_refits, signatures, mm) {
     geom_boxplot(aes(y = cos_sim_recostructed), outliers = FALSE) +
     ggbeeswarm::geom_quasirandom(aes(y = cos_sim_recostructed), size = 0.2) +
     geom_text(data = mean_refit, mapping = aes(y = 1, label = paste0("mean:\n",label)), vjust = 0) +
+    theme_cowplot() +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
     labs(x = NULL, y = "cosine similarity reconstructed")
@@ -232,6 +233,7 @@ compare_contribution_cosine = function(signature_refits) {
     geom_tile(aes(fill = value)) +
     geom_text(aes(label = round(value, 3))) +
     scale_fill_gradient(low = "white", high = "red") +
+    theme_cowplot() +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
     labs(x = NULL, y = NULL)
 }
