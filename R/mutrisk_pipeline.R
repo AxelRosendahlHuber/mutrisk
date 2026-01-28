@@ -166,6 +166,7 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
     refit_check_plots = plot_refits / (cossim_refits | contribution_cosine | plot_spacer() ) +
       plot_layout(heights  = c(1.5, 1)) +
       plot_annotation(tag_levels = "A") &
+      cowplot::theme_cowplot() +
       theme(plot.margin = margin(5,5,5,5, unit = "mm"),
             plot.tag = element_text(face = 'bold'))
       ggsave(paste0(plotdir, tissue, "_", name, "_", "refit_check.png"), refit_check_plots, width = 18, height = 14, bg = "white")
