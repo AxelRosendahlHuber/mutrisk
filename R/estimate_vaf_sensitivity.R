@@ -104,7 +104,7 @@ effect_coverage_vaf = function(cell_muts, metadata) {
       facet_grid(. ~ adjustment) +
       theme_bw() +
       scale_y_continuous(limits = c(0, NA), labels = scales::comma) +
-      theme(legend.position = "none")
+      theme(legend.position = "none") + labs(x = "Sequencing depth")
 
   return(list(df_results = df_results, plot = plot))
 }

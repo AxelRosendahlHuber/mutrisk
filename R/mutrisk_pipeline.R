@@ -224,14 +224,6 @@ mutrisk_pipeline = function(cell_muts, input_signatures,
 
   fwrite(rate_per_sample, paste0(outdir, name, "_rate_per_sample.tsv.gz"))
   fwrite(sig_rate_per_sample, paste0(outdir, name, "_sig_rate_per_sample.tsv.gz"))
-#
-#   # output the data
-#   output_list = list(dnds_exon = dnds_exon,
-#                      dnds_intron_unique = dnds_intron_unique,  # consider not calculating this
-#                      dnds_intron = dnds_intron,
-#                      mutrisk_rates = mutrisk_rates,
-#                      rate_per_sample = rate_per_sample,
-#                      sig_rate_per_sample = sig_rate_per_sample)
-#   output_list
+
 }
 
