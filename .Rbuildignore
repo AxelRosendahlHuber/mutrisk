@@ -13,3 +13,5 @@
 ^notes\.R$
 ^_pkgdown\.yml$
 ^\.github$
+^\.positai$
+^\.claude$

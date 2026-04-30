@@ -37,7 +37,7 @@ get_mut_context = function(input_muts, ref_genome = "hg19") {
   gr$trinuc = getSeq(ref_genome, gr + 1, as.character = TRUE)
 
   gr = gr |>
-    plyranges::mutate(alt_strand = case_when(ref %in% c("A", "G") & alt == "C" ~ "G",
+    plyranges:::mutate.Ranges(alt_strand = case_when(ref %in% c("A", "G") & alt == "C" ~ "G",
                                   ref %in% c("A", "G") & alt == "G" ~ "C",
                                   ref %in% c("A", "G") & alt == "T" ~ "A",
                                   ref %in% c("A", "G") & alt == "A" ~ "T",
